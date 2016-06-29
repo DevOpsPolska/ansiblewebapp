@@ -1,0 +1,4 @@
+secrets.yml
+hosts
+test*
+*retry

@@ -1,0 +1,43 @@
+--- #OceanWebServ01.yml
+#Ocean Web Server 01 app server
+# variable definition section
+- hosts: digitalocean
+  vars_files:
+    - secrets.yml
+    
+  tasks:
+# check if there is a ssh key at your anisble machine if not creates it
+  - name: ensure ssh key exists
+    user: >
+      name={{ ansible_user }} 
+      generate_ssh_key=yes
+      ssh_key_file=.ssh/id_rsa
+
+# check if your ssh key is added to digital ocean account if not sends it.
+    
+  - name: ensure key exists at DigitalOcean
+    digital_ocean: >
+      state=present
+      command=ssh
+      name=my_ssh_key
+      ssh_pub_key={{ lookup('file', '~/.ssh/id_rsa.pub') }}
+      api_token={{ do_token }}
+    register: my_ssh_key
+
+#  creates droplet from Digital Ocean image of ubuntu  and add ssh key to it
+  
+  - name: ensure droplet one exists
+    digital_ocean: >
+      state=present
+      command=droplet
+      name=oceanwebserver01
+      unique_name=yes
+      size_id=512mb
+      region_id=fra1
+      image_id=ubuntu-15-10-x64
+      ssh_key_ids={{ my_ssh_key.ssh_key.id }}
+      api_token={{ do_token }} 
+    register: oceanwebserver01
+ 
+  - debug: msg="IP is {{ oceanwebserver01.droplet.ip_address }}"
+
